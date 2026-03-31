@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CO₂ Monitorings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="content">
+    <h1>Telpas CO₂ kontrole</h1>
+
+    <div class="buttons">
+        <div>
+            <a href="/?mode=data{% if date %}&date={{ date }}{% endif %}">
+                <button>Dati</button>
+            </a>
+        </div>
+
+        <div>
+            <a href="/?mode=chart">
+                <button>Grafiks</button>
+            </a>
+        </div>
+    </div>
+
+    <form method="get">
+        <input type="hidden" name="mode" value="{{ mode }}">
+        <input type="date" name="date" value="{{ date }}">
+        <button type="submit">Rādīt</button>
+    </form>
+
+    {% if co2 is not none %}
+        <h2 style="color: {{ color }}">
+            CO₂: {{ co2 }} ppm — {{ status }}
+        </h2>
+    {% endif %}
+
+    {% if date and mode == "data" and data %}
+        <ul>
+            {% for row in data %}
+                <li>{{ row[1] }} — {{ row[0] }} ppm</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if mode == "chart" %}
+        <canvas id="chart"></canvas>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const allData = {{ all_data | tojson }};
+        
+            const labels = allData.map(x => x[1]);
+            const values = allData.map(x => Number(x[0]));
+        
+            const colors = values.map(v => {
+                if (v < 800) return "green";
+                if (v < 1200) return "orange";
+                return "red";
+            });
+        
+            new Chart(document.getElementById("chart"), {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "CO₂ ppm",
+                        data: values,
+                        backgroundColor: colors
+                    }]
+                }
+            });
+        </script>
+    {% endif %}
+</div>
+</body>
+</html>
